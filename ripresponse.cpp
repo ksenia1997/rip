@@ -4,7 +4,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <netinet/ip.h>
-
+#include "ripngheader.h"
+    
 int main(int argc, char* argv[]){
     char* interface;
     char* ip_addr;
