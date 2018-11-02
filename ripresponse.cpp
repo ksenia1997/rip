@@ -1,3 +1,5 @@
+//ISA projekt
+//Ksenia Bolshakova
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,13 +11,16 @@
 int main(int argc, char* argv[]){
     char* interface;
     char* ip_addr;
-    char ip_addr_next_hop[40] = "0000:0000:0000:0000:0000:0000:0000:0000";
-    int netmask;
+    char* ip_addr_next_hop = (char*) "::";
+    char* netmask;
     char* prefix;
-    int metric = 1;
-    int router_tag = 0;
+    char* metric = (char*) "1";
+    char* router_tag = (char*) "0";
     struct in_addr addr;
     int option;
+    if (argc < 3) {
+        fprintf(stderr, "Not all arguments.\n");
+    }
     while((option = getopt(argc, argv, "i:r:n:m:t:")) != -1) {
         switch(option) {
             case 'i':
@@ -24,33 +29,25 @@ int main(int argc, char* argv[]){
             case 'r':
                 ip_addr = strtok(optarg, "/");
                 prefix = strtok(NULL, "/");
-                printf("IP address: %s, prefix: %s\n", ip_addr, prefix);
-                if (!inet_aton(ip_addr, &addr)) {
-                    fprintf(stderr, "Invalid address of IPv6.\n");
-                    exit(-1);
-                };
-                
-                printf("Vypis: %s\n", inet_ntoa(addr));
-                netmask = atoi(prefix); 
-                if (!((netmask >= 16 ) && (netmask <= 128))) {
+                netmask = prefix; 
+                if (!((atoi(netmask) >= 16 ) && (atoi(netmask) <= 128))) {
                     fprintf(stderr, "Bad length of the prefix.\n");
                     exit(-1);
                 }
                 break;
             case 'n':
-                strcpy(ip_addr_next_hop, optarg);
+                ip_addr_next_hop = optarg;
                 break;
             case 'm':
-                metric = atoi(optarg);
-                printf("metric: %d\n", metric);
-                if (!((metric >= 0)&& (metric <= 16))) {
+                metric = optarg;
+                if (!((atoi(metric) >= 0)&& (atoi(metric) <= 16))) {
                     fprintf(stderr, "Metric is out of range.\n");
                     exit(-1);
                 }
                 break;
             case 't':
-                router_tag = atoi(optarg);
-                if (!((router_tag >= 0) && (router_tag <= 65535))) {
+                router_tag = optarg;
+                if (!((atoi(router_tag) >= 0) && (atoi(router_tag) <= 65535))) {
                     fprintf(stderr, "Router tag is out of range.\n");
                     exit(-1);
                 }
@@ -63,5 +60,11 @@ int main(int argc, char* argv[]){
 
         }
     } 
+    printf("Interface: %s\n", interface);
+    printf("IP address: %s, netmask: %s\n", ip_addr, netmask);
+    printf("IP address of next hop: %s\n", ip_addr_next_hop);
+    printf("Metric: %s\n", metric);
+    printf("Router tag: %s\n", router_tag);
+
     return 0;
 }
