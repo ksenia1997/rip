@@ -102,7 +102,7 @@ int main(int argc, char* argv[]){
         return -1;
     }
     //Build RIPng packet
-    RIPngPacket *ripngPacket = new RIPngPacket(ip_addr, router_tag, netmask, metric, ip_addr_next_hop);
+    RIPngPacket *ripngPacket = new RIPngPacket(ip_addr_next_hop, ip_addr, router_tag, netmask, metric);
    
     //Send packet
     if (sendto(socket_of_client, ripngPacket->packet, ripngPacket->length, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0){

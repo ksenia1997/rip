@@ -29,9 +29,10 @@ RIPngPacket::RIPngPacket(char next_hop[32], char prefix[32], char route_tag[2], 
     int counter = 0;
     for (int i = 0; i < 32; i += 2) {
         char number[3];
-        number[0] = packet[i];
-        number[1] = packet[i+1];
+        number[0] = prefix[i];
+        number[1] = prefix[i+1];
         number[2] = '\0';
+
         int number_int = stoi(number, NULL, 16); //convert number char  to int with base 16
         unsigned short short_number = abs((unsigned short)number_int); 
         packet[4+counter] = short_number;
@@ -55,8 +56,8 @@ RIPngPacket::RIPngPacket(char next_hop[32], char prefix[32], char route_tag[2], 
         int count = 0;
         for (int i = 0; i < 32; i += 2) {
             char number[3];
-            number[0] = packet[i];
-            number[1] = packet[i+1];
+            number[0] = next_hop[i];
+            number[1] = next_hop[i+1];
             number[2] = '\0';
             int number_int = stoi(number, NULL, 16); //convert number char to int with base 16
             unsigned short short_number = abs((unsigned short)number_int); 
