@@ -16,6 +16,12 @@ int main(int argc, char* argv[]){
     char* prefix;
     char* metric = (char*) "1";
     char* router_tag = (char*) "0";
+    unsigned char buf[sizeof(struct in6_addr)];
+    unsigned char buf_next_hop[sizeof(struct in6_addr)];
+    char ip6_addr[INET6_ADDRSTRLEN];
+    char ip6_next_hop[INET6_ADDRSTRLEN];
+    int converted_next_hop;
+    int converted_addr;
     struct in_addr addr;
     int option;
     if (argc < 3) {
@@ -31,6 +37,20 @@ int main(int argc, char* argv[]){
                 ip_addr = strtok(optarg, "/");
                 prefix = strtok(NULL, "/");
                 netmask = prefix; 
+                converted_addr = inet_pton(AF_INET6, ip_addr, buf);
+                if (converted_addr <= 0) {
+                    if (converted_addr == 0) {
+                        fprintf(stderr, "IPv6 is not in presentation format.\n");
+                    }
+                    else{
+                        perror("inet_pton");
+                    }
+                    exit(-1);
+                }
+                if (inet_ntop(AF_INET6, buf, ip6_addr, INET6_ADDRSTRLEN) == NULL){
+                    perror("inet_ntop");
+                    exit(-1);
+                }
                 if (!((atoi(netmask) >= 16 ) && (atoi(netmask) <= 128))) {
                     fprintf(stderr, "Bad length of the prefix.\n");
                     exit(-1);
@@ -38,6 +58,20 @@ int main(int argc, char* argv[]){
                 break;
             case 'n':
                 ip_addr_next_hop = optarg;
+                converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, buf_next_hop);
+                if (converted_next_hop <= 0) {
+                    if (converted_next_hop == 0) {
+                        fprintf(stderr, "IPv6 of next hope is not in presentation format.\n");
+                    }
+                    else{
+                        perror("inet_pton");
+                    }
+                    exit(-1);
+                }
+                if (inet_ntop(AF_INET6, buf_next_hop, ip6_next_hop, INET6_ADDRSTRLEN) == NULL){
+                    perror("inet_ntop");
+                    exit(-1);
+                }
                 break;
             case 'm':
                 metric = optarg;

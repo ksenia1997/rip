@@ -1,0 +1,15 @@
+./myripsniffer -i <interface>, kde význam parametru je následující:
+* -i: <interface>  is interface on which packet capture is to be performed
+
+Start timer and for 60 sec will find RIPv1 and RIPv2 packets, after it starts timer again and will find RIPng packet.
+
+./myripresponse -i <interface> -r <IPv6>/[16-128] {-n <IPv6>} {-m [0-16]} {-t [0-65535]}
+
+* -i: <interface> is interface on which packet capture is to be performed;
+* -r: v <IPv6> is IP address of capture network and behind the slash is numerical length of the network mask;
+* -m: is a RIP Metric, the number of hopes, implicitly is 1;
+* -n: <IPv6> is a next-hope address for capture route, implicitly "::";
+* -t: is a number of Router Tag, implicitly 0.
+
+Send a RIPng packet with user's parameteres.
+Please enter a full IPv6 address.

@@ -15,10 +15,22 @@ void ripInfo(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* pack
     int ripVersion = packet[43];
     printf("Version: RIPv%x\n", ripVersion);
     if (ripVersion == 2) {
-        printf("Authentication: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", packet[50], packet[51], packet[52], packet[53], 
-                                                                     packet[54], packet[55], packet[56], packet[57], 
-                                                                     packet[58], packet[59], packet[60], packet[61], 
-                                                                     packet[62], packet[63], packet[64], packet[65]);
+        //authentication Type is 2 byte
+        int authenticationType1 = packet[48];
+        int authenticationType2 = packet[49];
+        if((authenticationType1 == 0)&&(authenticationType2 == 2)) {
+            printf("Authentication: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", packet[50], packet[51], packet[52], packet[53], 
+                                                                         packet[54], packet[55], packet[56], packet[57], 
+                                                                         packet[58], packet[59], packet[60], packet[61], 
+                                                                         packet[62], packet[63], packet[64], packet[65]);
+        }
+        else if ((authenticationType1 == 0)&&(authenticationType2 == 3)) {
+            printf("Authentication: MD5");
+        }
+        else{
+            printf("Authentication: Other");
+        }
+        
     }
     int ipVersion = packet[14]>>4;
   
