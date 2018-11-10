@@ -13,6 +13,6 @@ class RIPngPacket {
     public:
         int length;
         char *packet;
-        RIPngPacket(unsigned char next_hop[sizeof(struct in6_addr)], unsigned char prefix[sizeof(struct in6_addr)], char route_tag[2], char* prefix_len, char* metric);
+        RIPngPacket( struct in6_addr next_hop,  struct in6_addr prefix, char route_tag[2], char* prefix_len, char* metric);
 
 };

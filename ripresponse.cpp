@@ -18,17 +18,13 @@ int main(int argc, char* argv[]){
     char* router_tag = (char*) "0";
     unsigned char buf[sizeof(struct in6_addr)];
     unsigned char buf_next_hop[sizeof(struct in6_addr)];
-    char ip6_addr[INET6_ADDRSTRLEN];
-    char ip6_next_hop[INET6_ADDRSTRLEN];
     int converted_next_hop;
     int converted_addr;
-    struct in_addr addr;
+    struct in6_addr ipv6_addr;
+    struct in6_addr ipv6_nexthop_addr;
     int option;
-    converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, buf_next_hop);
-    if (inet_ntop(AF_INET6, buf_next_hop, ip6_next_hop, INET6_ADDRSTRLEN) == NULL){
-        perror("inet_ntop");
-        exit(-1);
-    }
+    converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, &ipv6_nexthop_addr);
+
    
     if (argc < 3) {
         fprintf(stderr, "Not all arguments.\n");
@@ -43,7 +39,7 @@ int main(int argc, char* argv[]){
                 ip_addr = strtok(optarg, "/");
                 prefix = strtok(NULL, "/");
                 netmask = prefix; 
-                converted_addr = inet_pton(AF_INET6, ip_addr, buf);
+                converted_addr = inet_pton(AF_INET6, ip_addr, &ipv6_addr);
                 if (converted_addr <= 0) {
                     if (converted_addr == 0) {
                         fprintf(stderr, "IPv6 is not in presentation format.\n");
@@ -53,10 +49,7 @@ int main(int argc, char* argv[]){
                     }
                     exit(-1);
                 }
-                if (inet_ntop(AF_INET6, buf, ip6_addr, INET6_ADDRSTRLEN) == NULL){
-                    perror("inet_ntop");
-                    exit(-1);
-                }
+
                 if (!((atoi(netmask) >= 16 ) && (atoi(netmask) <= 128))) {
                     fprintf(stderr, "Bad length of the prefix.\n");
                     exit(-1);
@@ -64,7 +57,7 @@ int main(int argc, char* argv[]){
                 break;
             case 'n':
                 ip_addr_next_hop = optarg;
-                converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, buf_next_hop);
+                converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, &ipv6_nexthop_addr);
                 if (converted_next_hop <= 0) {
                     if (converted_next_hop == 0) {
                         fprintf(stderr, "IPv6 of next hope is not in presentation format.\n");
@@ -72,10 +65,6 @@ int main(int argc, char* argv[]){
                     else{
                         perror("inet_pton");
                     }
-                    exit(-1);
-                }
-                if (inet_ntop(AF_INET6, buf_next_hop, ip6_next_hop, INET6_ADDRSTRLEN) == NULL){
-                    perror("inet_ntop");
                     exit(-1);
                 }
                 break;
@@ -102,8 +91,8 @@ int main(int argc, char* argv[]){
         }
     } 
     printf("Interface: %s\n", interface);
-    printf("IP address: %s, netmask: %s\n", ip6_addr, netmask);
-    printf("IP address of next hop: %s\n", ip6_next_hop);
+    printf("IP address: %s, netmask: %s\n", prefix, netmask);
+    printf("IP address of next hop: %s\n", ip_addr_next_hop);
     printf("Metric: %s\n", metric);
     printf("Router tag: %s\n", router_tag);
 
@@ -142,7 +131,8 @@ int main(int argc, char* argv[]){
         return -1;
     }
     //Build RIPng packet
-    RIPngPacket *ripngPacket = new RIPngPacket(buf_next_hop, buf, router_tag, netmask, metric);
+
+    RIPngPacket *ripngPacket = new RIPngPacket(ipv6_nexthop_addr, ipv6_addr, router_tag, netmask, metric);
    
     //Send packet
     if (sendto(socket_of_client, ripngPacket->packet, ripngPacket->length, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0){
