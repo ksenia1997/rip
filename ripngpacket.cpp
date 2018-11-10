@@ -3,7 +3,7 @@
 #include "ripngpacket.h"
 using namespace std;
 
-RIPngPacket::RIPngPacket( struct in6_addr next_hop,  struct in6_addr prefix, char route_tag[2], char* prefix_len, char* metric) {
+RIPngPacket::RIPngPacket( struct in6_addr next_hop,  struct in6_addr prefix, char route_tag[2], char* prefix_len, char* metric, int purpose) {
     int nextHopCheck = 0;
     char nexthop [INET6_ADDRSTRLEN];
     inet_ntop(AF_INET6, &next_hop, nexthop, INET6_ADDRSTRLEN);
@@ -11,7 +11,6 @@ RIPngPacket::RIPngPacket( struct in6_addr next_hop,  struct in6_addr prefix, cha
         this->length = 24;
         this->packet = (char*)malloc(4+20); //allocation of memory ripng header + ripng rt entry length
         memset(this->packet, '\0', 24); //sets 24 bytes of the block memory to the '\0'
-        printf("not nexthop.\n");
     }
     else{
         nextHopCheck = 1;
@@ -21,7 +20,7 @@ RIPngPacket::RIPngPacket( struct in6_addr next_hop,  struct in6_addr prefix, cha
     }
 
     //Create ripng header
-    memset(&packet[0], 2 , 1); //Command 
+    memset(&packet[0], purpose, 1); //Command 
     memset(&packet[1], 1, 1); //Version
     memset(&packet[2], 0, 1); //Must be 0
     memset(&packet[3], 0, 1); //Must be 0

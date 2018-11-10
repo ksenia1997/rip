@@ -16,8 +16,6 @@ int main(int argc, char* argv[]){
     char* prefix;
     char* metric = (char*) "1";
     char* router_tag = (char*) "0";
-    unsigned char buf[sizeof(struct in6_addr)];
-    unsigned char buf_next_hop[sizeof(struct in6_addr)];
     int converted_next_hop;
     int converted_addr;
     struct in6_addr ipv6_addr;
@@ -131,8 +129,8 @@ int main(int argc, char* argv[]){
         return -1;
     }
     //Build RIPng packet
-
-    RIPngPacket *ripngPacket = new RIPngPacket(ipv6_nexthop_addr, ipv6_addr, router_tag, netmask, metric);
+    // 2 is purpose of the message (it is a pesponse)
+    RIPngPacket *ripngPacket = new RIPngPacket(ipv6_nexthop_addr, ipv6_addr, router_tag, netmask, metric, 2);
    
     //Send packet
     if (sendto(socket_of_client, ripngPacket->packet, ripngPacket->length, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0){

@@ -1,10 +1,15 @@
 ﻿With help of Makefile you can compile a project.
  make  - compile a project.
- make clear – delete all files created to build a project.
-./myripsniffer -i <interface>, kde význam parametru je následující:
+ make clean – delete all files created to build a project.
+------------------------------------------------------------------------------------------------------------
+
+./myripsniffer -i <interface>
 * -i: <interface>  is interface on which packet capture is to be performed
 
-Start timer and for 60 sec will find RIPv1 and RIPv2 packets, after it starts timer again and will find RIPng packet.
+Start timer and for 60 sec will find RIPv1 and RIPv2 packets and print information about it, after it starts timer again and will find RIPng packet and print information.
+Files: ripsniffer.cpp
+
+------------------------------------------------------------------------------------------------------------
 
 ./myripresponse -i <interface> -r <IPv6>/[16-128] {-n <IPv6>} {-m [0-16]} {-t [0-65535]}
 
@@ -15,9 +20,24 @@ Start timer and for 60 sec will find RIPv1 and RIPv2 packets, after it starts ti
 * -t: is a number of Router Tag, implicitly 0.
 
 Send a RIPng packet with user's parameteres.
-Please enter a full IPv6 address.
+Files: ripresponse.cpp, ripngpacket.cpp, ripngpacket.h
+
+---------------------------------------------------------------------------------------------------------------
+
+./myriprequest -i <interface>
+* -i: <interface> is interface for request
+
+Send a RIPng request.
+Files: riprequest.cpp, ripngpacket.cpp, ripngpacket.h
+
+-----------------------------------------------------------------------------------------------------------------
 
 Examples how to start:
 
 ./myripsniffer -i vboxnet0
+
 ./myripresponse -i vboxnet0 -r 0124:0123:1232:1232:0000:0000:0000:0000/64
+./myripresponse -i vboxnet0 -r 0124:0123:1232:1232:0000:0000:0000:0000/64 -m 6 -n 1212:1313:7878:0000:1111:2222:0000:0001 -t 65000
+
+./myriprequest -i vboxnet0
+
