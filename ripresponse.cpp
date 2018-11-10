@@ -24,6 +24,12 @@ int main(int argc, char* argv[]){
     int converted_addr;
     struct in_addr addr;
     int option;
+    converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, buf_next_hop);
+    if (inet_ntop(AF_INET6, buf_next_hop, ip6_next_hop, INET6_ADDRSTRLEN) == NULL){
+        perror("inet_ntop");
+        exit(-1);
+    }
+
     if (argc < 3) {
         fprintf(stderr, "Not all arguments.\n");
         return -1;
@@ -96,8 +102,8 @@ int main(int argc, char* argv[]){
         }
     } 
     printf("Interface: %s\n", interface);
-    printf("IP address: %s, netmask: %s\n", ip_addr, netmask);
-    printf("IP address of next hop: %s\n", ip_addr_next_hop);
+    printf("IP address: %s, netmask: %s\n", ip6_addr, netmask);
+    printf("IP address of next hop: %s\n", ip6_next_hop);
     printf("Metric: %s\n", metric);
     printf("Router tag: %s\n", router_tag);
 
@@ -136,7 +142,7 @@ int main(int argc, char* argv[]){
         return -1;
     }
     //Build RIPng packet
-    RIPngPacket *ripngPacket = new RIPngPacket(ip_addr_next_hop, ip_addr, router_tag, netmask, metric);
+    RIPngPacket *ripngPacket = new RIPngPacket(ip6_next_hop, ip6_addr, router_tag, netmask, metric);
    
     //Send packet
     if (sendto(socket_of_client, ripngPacket->packet, ripngPacket->length, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0){
