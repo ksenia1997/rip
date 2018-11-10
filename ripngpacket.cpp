@@ -3,9 +3,10 @@
 #include "ripngpacket.h"
 using namespace std;
 
-RIPngPacket::RIPngPacket(char next_hop[INET6_ADDRSTRLEN], char prefix[INET6_ADDRSTRLEN], char route_tag[2], char* prefix_len, char* metric) {
+RIPngPacket::RIPngPacket(unsigned char next_hop[sizeof(struct in6_addr)], unsigned char prefix[sizeof(struct in6_addr)], char route_tag[2], char* prefix_len, char* metric) {
     int nextHopCheck = 0;
-    if (strcmp(next_hop, "::") == 0) {
+    unsigned char next_hop_implicitly[3] = "\0";
+    if (next_hop[0] == '\0') {
         this->length = 24;
         this->packet = (char*)malloc(4+20); //allocation of memory ripng header + ripng rt entry length
         memset(this->packet, '\0', 24); //sets 24 bytes of the block memory to the '\0'
@@ -26,7 +27,7 @@ RIPngPacket::RIPngPacket(char next_hop[INET6_ADDRSTRLEN], char prefix[INET6_ADDR
 
     //Creation of Route Table Entry
     //IPv6
-    memcpy(&packet[4], &prefix, sizeof(in6_addr));
+    memcpy(&packet[4], &prefix, sizeof(struct in6_addr));
 
     //Route Tag
     short routeTag = (short) atoi(route_tag);
@@ -42,7 +43,7 @@ RIPngPacket::RIPngPacket(char next_hop[INET6_ADDRSTRLEN], char prefix[INET6_ADDR
 
     //Next hop
     if (nextHopCheck == 1) {
-        memcpy(&packet[24], &next_hop, sizeof(in6_addr));
+        memcpy(&packet[24], &next_hop, sizeof(struct in6_addr));
 
         packet[44 - 1] = 0xff; //Metric field (ripng header + rt entry len of ripng + nh entry len of ripng)
     }

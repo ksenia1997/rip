@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
         perror("inet_ntop");
         exit(-1);
     }
-
+   
     if (argc < 3) {
         fprintf(stderr, "Not all arguments.\n");
         return -1;
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]){
         return -1;
     }
     //Build RIPng packet
-    RIPngPacket *ripngPacket = new RIPngPacket(ip6_next_hop, ip6_addr, router_tag, netmask, metric);
+    RIPngPacket *ripngPacket = new RIPngPacket(buf_next_hop, buf, router_tag, netmask, metric);
    
     //Send packet
     if (sendto(socket_of_client, ripngPacket->packet, ripngPacket->length, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0){
