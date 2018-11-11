@@ -9,8 +9,8 @@
 #include "ripngpacket.h"
     
 int main(int argc, char* argv[]){
-    char* interface;
-    char* ip_addr;
+    char* interface = NULL;
+    char* ip_addr = NULL;
     char* ip_addr_next_hop = (char*) "::";
     char* netmask;
     char* prefix;
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, &ipv6_nexthop_addr);
 
    
-    if (argc < 3) {
+    if (argc < 5) {
         fprintf(stderr, "Not all arguments.\n");
         return -1;
     }
@@ -88,6 +88,11 @@ int main(int argc, char* argv[]){
 
         }
     } 
+ 
+    if ((interface == NULL) || (ip_addr == NULL)){
+        fprintf(stderr, "Missing necessary arguments: interface and IPv6 address.\n");
+        exit(-1);
+    }
     printf("Interface: %s\n", interface);
     printf("IP address: %s, netmask: %s\n", prefix, netmask);
     printf("IP address of next hop: %s\n", ip_addr_next_hop);

@@ -13,11 +13,11 @@ ripsniffer.o: ripsniffer.cpp
 	g++ -std=c++11  ripsniffer.cpp -c
 
 ripresponse.o: ripresponse.cpp ripngpacket.h
-	g++ -std=c++11 -c ripresponse.cpp -g
-riprequest.o: riprequest.o ripngpacket.h
-	g++ -std=c++11 -c riprequest.cpp -g
+	g++ -std=c++11 -c ripresponse.cpp 
+riprequest.o: riprequest.cpp ripngpacket.h
+	g++ -std=c++11 -c riprequest.cpp 
 
 ripngpacket.o: ripngpacket.cpp ripngpacket.h
-	g++ -std=c++11 -c ripngpacket.cpp -g
+	g++ -std=c++11 -c ripngpacket.cpp 
 clean:
 	rm -rf *o myripsniffer myripresponse myriprequest

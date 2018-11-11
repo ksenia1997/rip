@@ -62,7 +62,7 @@ void alarmStopHandler(int signal) {
 }
 
 int main(int argc, char *argv[]) {
-    char *dev;  //device to sniff on
+    char *dev = NULL;  //device to sniff on
     //pcap_t *handle; // Session handle  
     char errbuf[PCAP_ERRBUF_SIZE]; //Error string
     struct bpf_program fp; //The compiled filter expression
@@ -90,6 +90,11 @@ int main(int argc, char *argv[]) {
                 exit(-1);
         }
     }
+
+    if (dev == NULL) {
+        fprintf(stderr, "Missing interface.\nPlease enter: -i <interface>\n");
+        exit(-1);
+    }
     //This part of program prepares the sniffer to sniff all traffic coming from or going to port NUMBER
     //Get IP and Mask
     if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
@@ -101,22 +106,22 @@ int main(int argc, char *argv[]) {
     handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
         fprintf(stderr, "Could not open device %s, %s\n", dev, errbuf );
-        return(2);
+        return(-1);
     }
     if  (pcap_datalink(handle) != DLT_EN10MB) {
         fprintf(stderr, "Device %s does not provide Ethernet headers -not supported.\n", dev);
-        return(2);
+        return(-1);
     }
 
     //Set and Compile RIPv1 and RIPv2 filter
     if (pcap_compile(handle, &fp, filter_expRIP, 0, net) == -1) {
         fprintf(stderr, "Could not parse filter %s: %s\n", filter_expRIP, pcap_geterr(handle));
-        return(2);
+        return(-1);
     }
 
     if (pcap_setfilter(handle, &fp) == -1) {
         fprintf(stderr, "Could not install filter %s: %s\n", filter_expRIP, pcap_geterr(handle));
-        return(2);
+        return(-1);
     }
 
     printf("RIPv1 and RIPv2.\n");
@@ -128,12 +133,12 @@ int main(int argc, char *argv[]) {
     //Set and Compile RIPng filter
     if (pcap_compile(handle, &fp, filter_expRIPng, 0, net) == -1) {
         fprintf(stderr, "Could not parse filter %s: %s\n", filter_expRIPng, pcap_geterr(handle));
-        return(2);
+        return(-1);
     }
 
     if (pcap_setfilter(handle, &fp) == -1) {
         fprintf(stderr, "Could not install filter %s: %s\n", filter_expRIPng, pcap_geterr(handle));
-        return(2);
+        return(-1);
     }
 
     printf("RIPng.\n");

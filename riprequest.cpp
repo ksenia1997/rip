@@ -14,7 +14,7 @@ pcap_t *handle; // Session handle
 
 
 int main(int argc, char *argv[]) {
-    char* interface;
+    char* interface = NULL;
     char* ip_addr_next_hop = (char*) "::";
     char* netmask = (char*)"0";
     char* prefix = (char*) "::";
@@ -45,6 +45,11 @@ int main(int argc, char *argv[]) {
             default:
                 exit(-1);
         }
+    }
+
+    if (interface == NULL) {
+        fprintf(stderr, "Missing an interface.\n");
+        exit(-1);
     }
     struct sockaddr_in6 dest_addr;
     struct sockaddr_in6 source_addr;
