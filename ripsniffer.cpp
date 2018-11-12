@@ -7,6 +7,7 @@
 #include <pcap.h>
 #include <string.h>
 #include <csignal>
+#define RIP_ENTRY 20
 pcap_t *handle; // Session handle  
 //Print information about RIPv1 and RIPv2 
 void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
@@ -19,47 +20,78 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
         fprintf(stderr, "Empty packet.\n");
         return;
     }
+    printf("RIPpacket\n");
 
+    
     int ipVersion = packet[14]>>4;
+    //RIPv1 RIPv2
     if (ipVersion == 4) {
-        int ripCommand = packet[42];
+        printf("Source IPv4 address: %d:%d:%d:%d\n",packet[26], packet[27], packet[28], packet[29]);
+        printf("Destination IPv4 address: %d:%d:%d:%d\n", packet[30], packet[31], packet[32], packet[33]);
+        
+        short packetLen = (short)(((unsigned char)packet[38]) << 8 | ((unsigned char)packet[39]));
+        packetLen = packetLen - 8;
 
+        int ripCommand = packet[42];
+        if (ripCommand == 2) {
+            printf("Command: Response.\n");
+        }
+        else {
+            printf("Command: Request.\n");
+        }
         int ripVersion = packet[43];
         printf("Version: RIPv%x\n", ripVersion);
         if (ripVersion == 2) {
-            if (ripCommand == 2) {
-                printf("Command: Responce.\n");
-            }
-            else {
-                printf("Command: Request.\n");
-            }
-            //authentication Type is 2 byte
-            int authenticationType1 = packet[48];
-            int authenticationType2 = packet[49];
-            if((authenticationType1 == 0)&&(authenticationType2 == 2)) {
-                printf("Authentication: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", packet[50], packet[51], packet[52], packet[53], 
-                                                                            packet[54], packet[55], packet[56], packet[57], 
-                                                                            packet[58], packet[59], packet[60], packet[61], 
-                                                                            packet[62], packet[63], packet[64], packet[65]);
-            }
-            else if ((authenticationType1 == 0)&&(authenticationType2 == 3)) {
-                printf("Authentication: MD5");
-            }
-            else{
-                printf("Authentication: Other");
+            if ((int(packet[46]) == 255) && (int(packet[47]) == 255)){
+                //authentication Type is 2 byte
+                int authenticationType1 = packet[48];
+                int authenticationType2 = packet[49];
+
+                if((authenticationType1 == 0)&&(authenticationType2 == 2)) {
+                    printf("Authentication type: Simple password(2).\n");
+                    printf("Authentication: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", packet[50], packet[51], packet[52], packet[53], 
+                                                                                packet[54], packet[55], packet[56], packet[57], 
+                                                                                packet[58], packet[59], packet[60], packet[61], 
+                                                                                packet[62], packet[63], packet[64], packet[65]);
+                    int i = 66;
+                    printf("\n");
+                    printf("Route Entry.\n");
+                    while((i+RIP_ENTRY) <= (42+packetLen)) {
+                        printf("Address Family: %d\n", (short)(((unsigned char)packet[i]) << 8 | ((unsigned char)packet[i+1])));
+                        printf("Route tag: %d\n", (short)(((unsigned char)packet[i+2]) << 8 | ((unsigned char)packet[i+3])));
+                        printf("IP address: %d:%d:%d:%d\n", packet[i+4], packet[i+5], packet[i+6], packet[i+7]);
+                        printf("Netmask: %d:%d:%d:%d\n", packet[i+8], packet[i+9], packet[i+10], packet[i+11]);
+                        printf("Next hop: %d:%d:%d:%d\n", packet[i+12], packet[i+13], packet[i+14], packet[i+15]);
+                        long metric = 0;
+                        for (int k = 0; k < 4; k++) {
+                            metric = (metric << 4) | packet[i+16+k];
+                        }
+                        printf("Metric: %d\n", metric);
+                        printf("\n");
+                        i = i+RIP_ENTRY;                                    
+                    }
+                    
+                }
+
+                else if ((authenticationType1 == 0)&&(authenticationType2 == 3)) {
+                    printf("Authentication: MD5");
+                }
+                else{
+                    printf("Authentication: Other");
+                }
             }
             
         }
       
-        printf("Source IPv4 address: %d:%d:%d:%d\n",packet[26], packet[27], packet[28], packet[29]);
-        printf("Destination IPv4 address: %d:%d:%d:%d\n", packet[30], packet[31], packet[32], packet[33]);
+        
  
         printf("\n");
     }
     else {
-        
+        short packetLen = (short)(((unsigned char)packet[42]) << 8 | ((unsigned char)packet[43]));
+        packetLen = packetLen - 8;
         printf("Version: RIPng\n");
-        int ipVersion = packet[14]>>4;     
+           
         printf("Source IPv6 address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",packet[22], packet[23], packet[24], packet[25], packet[26], packet[27], packet[28], packet[29],
                                                                             packet[30], packet[31], packet[32], packet[33], packet[34], packet[35], packet[36], packet[37]);
         printf("Destination IPv6 address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n", packet[38], packet[39], packet[40], packet[41], packet[42], packet[43], packet[44], packet[45],

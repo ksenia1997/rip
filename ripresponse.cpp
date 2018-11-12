@@ -135,6 +135,7 @@ int main(int argc, char* argv[]){
         perror("error of setsockopt"); 
         return -1;
     }
+
     //Binding of a socket to the port
     if (bind(socket_of_client, (struct sockaddr *) &source_addr, sizeof(source_addr)) < 0) {
         perror("error of binding");
@@ -148,7 +149,7 @@ int main(int argc, char* argv[]){
     }
     
     //Build RIPng packet
-    // 2 is purpose of the message (it is a pesponse)
+    // 2 is purpose of the message (it is a response)
     RIPngPacket *ripngPacket = new RIPngPacket(ipv6_nexthop_addr, ipv6_addr, router_tag, netmask, metric, 2);
    
     //Send packet
