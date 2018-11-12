@@ -6,6 +6,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <netinet/ip.h>
+#include <net/if.h>
 #include "ripngpacket.h"
     
 int main(int argc, char* argv[]){
@@ -18,6 +19,7 @@ int main(int argc, char* argv[]){
     char* router_tag = (char*) "0";
     int converted_next_hop;
     int converted_addr;
+    unsigned int index;
     struct in6_addr ipv6_addr;
     struct in6_addr ipv6_nexthop_addr;
     int option;
@@ -32,6 +34,7 @@ int main(int argc, char* argv[]){
         switch(option) {
             case 'i':
                 interface = optarg;
+                index = if_nametoindex(optarg);
                 break;
             case 'r':
                 ip_addr = strtok(optarg, "/");
@@ -126,12 +129,9 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Could not create a socket.\n");
         exit(-1);
     }
-    int flag = 1;
-    setsockopt(socket_of_client, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
-    setsockopt(socket_of_client, SOL_SOCKET, SO_REUSEPORT, &flag, sizeof(flag));
 
     //Set of a socket
-    if (setsockopt(socket_of_client, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface))){
+    if (setsockopt(socket_of_client, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index))){
         perror("error of setsockopt"); 
         return -1;
     }
@@ -141,12 +141,12 @@ int main(int argc, char* argv[]){
         exit(-1);
     }
 
-
-    //int max_hop = 255;
-    //if (setsockopt(socket_of_client, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &max_hop, sizeof(max_hop))){
-    //    perror("error of setsockopt"); 
-    //    return -1;
-    //}
+    int max_hop = 255;
+    if (setsockopt(socket_of_client, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &max_hop, sizeof(max_hop))){
+        perror("error of setsockopt"); 
+        return -1;
+    }
+    
     //Build RIPng packet
     // 2 is purpose of the message (it is a pesponse)
     RIPngPacket *ripngPacket = new RIPngPacket(ipv6_nexthop_addr, ipv6_addr, router_tag, netmask, metric, 2);

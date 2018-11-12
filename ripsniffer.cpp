@@ -14,6 +14,12 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
     //unused parameters
     (void) args;
     (void) header;
+   
+    if (packet == NULL) {
+        fprintf(stderr, "Empty packet.\n");
+        return;
+    }
+
     int ipVersion = packet[14]>>4;
     if (ipVersion == 4) {
         int ripCommand = packet[42];

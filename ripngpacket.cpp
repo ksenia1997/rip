@@ -7,17 +7,12 @@ RIPngPacket::RIPngPacket( struct in6_addr next_hop,  struct in6_addr prefix, cha
     int nextHopCheck = 0;
     char nexthop [INET6_ADDRSTRLEN];
     inet_ntop(AF_INET6, &next_hop, nexthop, INET6_ADDRSTRLEN);
-    if (strcmp(nexthop, "::") == 0) {
-        this->length = 24;
-        this->packet = (char*)malloc(4+20); //allocation of memory ripng header + ripng rt entry length
-        memset(this->packet, '\0', 24); //sets 24 bytes of the block memory to the '\0'
-    }
-    else{
-        nextHopCheck = 1;
-        this->length = 44;
-        this->packet = (char*) malloc(44); //allocation of memory (header length of ripng + rt entry of ripng + nh entry of ripng)
-        memset(this->packet, '\0', 44); //sets 44 bytes of the block memory to the '\0'
-    }
+
+    nextHopCheck = 1;
+    this->length = 44;
+    this->packet = (char*) malloc(44); //allocation of memory (header length of ripng + rt entry of ripng + nh entry of ripng)
+    memset(this->packet, '\0', 44); //sets 44 bytes of the block memory to the '\0'
+    
 
     //Create ripng header
     memset(&packet[0], purpose, 1); //Command 
