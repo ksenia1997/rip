@@ -24,11 +24,11 @@ int main(int argc, char* argv[]){
     converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, &ipv6_nexthop_addr);
 
    
-    if (argc < 5) {
-        fprintf(stderr, "Not all arguments.\n");
+    if (argc < 2) {
+        fprintf(stderr, "Not all arguments.\nPlease enter: ./myripresponse -h to see a help.\n");
         return -1;
     }
-    while((option = getopt(argc, argv, "i:r:n:m:t:")) != -1) {
+    while((option = getopt(argc, argv, "i:r:n:m:t:h")) != -1) {
         switch(option) {
             case 'i':
                 interface = optarg;
@@ -80,6 +80,9 @@ int main(int argc, char* argv[]){
                     exit(-1);
                 }
                 break;
+            case 'h':
+                fprintf(stderr, "Please enter: -i <interface> -r <IPv6>/[16-128] {-n <IPv6>} {-m [0-16]} {-t [0-65535]}\n<interface> is interface on which packet capture is to be performed.\n<IPv6> is IP address of capture network and behind the slash is numerical length of the network mask.\n-n <IPv6> is a next-hope address for capture route, implicitly \"::\"\n-m is a RIP Metric, the number of hopes, implicitly is 1(not necessary parameter).\n-t is a number of Router Tag, implicitly 0.\n");
+                return 0;
             case '?':
                 fprintf(stderr, "Missing value of argument.\n");
                 return -1;
@@ -117,10 +120,20 @@ int main(int argc, char* argv[]){
 
     //Creation of a socket
     socket_of_client = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+
     //Failed to create a socket
     if (socket_of_client < 0) {
         fprintf(stderr, "Could not create a socket.\n");
         exit(-1);
+    }
+    int flag = 1;
+    setsockopt(socket_of_client, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
+    setsockopt(socket_of_client, SOL_SOCKET, SO_REUSEPORT, &flag, sizeof(flag));
+
+    //Set of a socket
+    if (setsockopt(socket_of_client, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface))){
+        perror("error of setsockopt"); 
+        return -1;
     }
     //Binding of a socket to the port
     if (bind(socket_of_client, (struct sockaddr *) &source_addr, sizeof(source_addr)) < 0) {
@@ -128,11 +141,12 @@ int main(int argc, char* argv[]){
         exit(-1);
     }
 
-    //Set of a socket
-    if (setsockopt(socket_of_client, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface))){
-        perror("error of setsockopt"); 
-        return -1;
-    }
+
+    //int max_hop = 255;
+    //if (setsockopt(socket_of_client, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &max_hop, sizeof(max_hop))){
+    //    perror("error of setsockopt"); 
+    //    return -1;
+    //}
     //Build RIPng packet
     // 2 is purpose of the message (it is a pesponse)
     RIPngPacket *ripngPacket = new RIPngPacket(ipv6_nexthop_addr, ipv6_addr, router_tag, netmask, metric, 2);

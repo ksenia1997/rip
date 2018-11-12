@@ -1,31 +1,34 @@
 ﻿With help of Makefile you can compile a project.
  make  - compile a project.
  make clean – delete all files created to build a project.
-------------------------------------------------------------------------------------------------------------
 
-./myripsniffer -i <interface>
+ Arguments in { } are not necessary.
+ ------------------------------------------------------------------------------------------------------------
+
+./myripsniffer -i <interface> {-h }
 * -i: <interface>  is interface on which packet capture is to be performed
-
+* -h is a help argument
 Start timer and for 60 sec will find RIPv1 and RIPv2 packets and print information about it, after it starts timer again and will find RIPng packet and print information.
 Files: ripsniffer.cpp
 
 ------------------------------------------------------------------------------------------------------------
 
-./myripresponse -i <interface> -r <IPv6>/[16-128] {-n <IPv6>} {-m [0-16]} {-t [0-65535]}
+./myripresponse -i <interface> -r <IPv6>/[16-128] {-n <IPv6>} {-m [0-16]} {-t [0-65535]} {-h }
 
 * -i: <interface> is interface on which packet capture is to be performed;
-* -r: v <IPv6> is IP address of capture network and behind the slash is numerical length of the network mask;
+* -r: <IPv6> is IP address of capture network and behind the slash is numerical length of the network mask;
 * -m: is a RIP Metric, the number of hopes, implicitly is 1;
 * -n: <IPv6> is a next-hope address for capture route, implicitly "::";
 * -t: is a number of Router Tag, implicitly 0.
-
+*-h is a help argument
 Send a RIPng packet with user's parameteres.
 Files: ripresponse.cpp, ripngpacket.cpp, ripngpacket.h
 
 ---------------------------------------------------------------------------------------------------------------
 
-./myriprequest -i <interface>
+./myriprequest -i <interface> {-h }
 * -i: <interface> is interface for request
+*-h is a help argument
 
 Send a RIPng request.
 Files: riprequest.cpp, ripngpacket.cpp, ripngpacket.h
@@ -38,6 +41,7 @@ Examples how to start:
 
 ./myripresponse -i vboxnet0 -r 0124:0123:1232:1232:0000:0000:0000:0000/64
 ./myripresponse -i vboxnet0 -r 0124:0123:1232:1232:0000:0000:0000:0000/64 -m 6 -n 1212:1313:7878:0000:1111:2222:0000:0001 -t 65000
+./myripresponse -i vboxnet0 -r 2001:db8:0:abcd::/64 
 
 ./myriprequest -i vboxnet0
 

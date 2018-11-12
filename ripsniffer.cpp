@@ -9,80 +9,86 @@
 #include <csignal>
 pcap_t *handle; // Session handle  
 //Print information about RIPv1 and RIPv2 
-void ripInfo(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
+void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
 {    
-    printf("RIP packet.\n");
-    int ripVersion = packet[43];
-    printf("Version: RIPv%x\n", ripVersion);
-    if (ripVersion == 2) {
-        //authentication Type is 2 byte
-        int authenticationType1 = packet[48];
-        int authenticationType2 = packet[49];
-        if((authenticationType1 == 0)&&(authenticationType2 == 2)) {
-            printf("Authentication: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", packet[50], packet[51], packet[52], packet[53], 
-                                                                         packet[54], packet[55], packet[56], packet[57], 
-                                                                         packet[58], packet[59], packet[60], packet[61], 
-                                                                         packet[62], packet[63], packet[64], packet[65]);
-        }
-        else if ((authenticationType1 == 0)&&(authenticationType2 == 3)) {
-            printf("Authentication: MD5");
-        }
-        else{
-            printf("Authentication: Other");
-        }
-        
-    }
+    //unused parameters
+    (void) args;
+    (void) header;
     int ipVersion = packet[14]>>4;
-  
-       
-    printf("Source IPv4 address: %d:%d:%d:%d\n",packet[26], packet[27], packet[28], packet[29]);
-    printf("Destination IPv4 address: %d:%d:%d:%d\n", packet[30], packet[31], packet[32], packet[33]);
-    //fflush(stdout);
-    printf("\n");
-}
-//Print information about RIPng
-void ripngInfo(u_char *useless,const struct pcap_pkthdr* pkthdr,const u_char* packet)
-{
-    printf("RIPng packet.\n");
-    printf("Version: RIPng\n");
-    int ipVersion = packet[14]>>4;     
-    printf("Source IPv6 address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",packet[22], packet[23], packet[24], packet[25], packet[26], packet[27], packet[28], packet[29],
+    if (ipVersion == 4) {
+        int ripCommand = packet[42];
+
+        int ripVersion = packet[43];
+        printf("Version: RIPv%x\n", ripVersion);
+        if (ripVersion == 2) {
+            if (ripCommand == 2) {
+                printf("Command: Responce.\n");
+            }
+            else {
+                printf("Command: Request.\n");
+            }
+            //authentication Type is 2 byte
+            int authenticationType1 = packet[48];
+            int authenticationType2 = packet[49];
+            if((authenticationType1 == 0)&&(authenticationType2 == 2)) {
+                printf("Authentication: %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", packet[50], packet[51], packet[52], packet[53], 
+                                                                            packet[54], packet[55], packet[56], packet[57], 
+                                                                            packet[58], packet[59], packet[60], packet[61], 
+                                                                            packet[62], packet[63], packet[64], packet[65]);
+            }
+            else if ((authenticationType1 == 0)&&(authenticationType2 == 3)) {
+                printf("Authentication: MD5");
+            }
+            else{
+                printf("Authentication: Other");
+            }
+            
+        }
+      
+        printf("Source IPv4 address: %d:%d:%d:%d\n",packet[26], packet[27], packet[28], packet[29]);
+        printf("Destination IPv4 address: %d:%d:%d:%d\n", packet[30], packet[31], packet[32], packet[33]);
+ 
+        printf("\n");
+    }
+    else {
+        
+        printf("Version: RIPng\n");
+        int ipVersion = packet[14]>>4;     
+        printf("Source IPv6 address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",packet[22], packet[23], packet[24], packet[25], packet[26], packet[27], packet[28], packet[29],
                                                                             packet[30], packet[31], packet[32], packet[33], packet[34], packet[35], packet[36], packet[37]);
-    printf("Destination IPv6 address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n", packet[38], packet[39], packet[40], packet[41], packet[42], packet[43], packet[44], packet[45],
+        printf("Destination IPv6 address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n", packet[38], packet[39], packet[40], packet[41], packet[42], packet[43], packet[44], packet[45],
                                                         packet[46], packet[47], packet[48], packet[49], packet[50], packet[51], packet[52], packet[53]);
     
-    //fflush(stdout);
-    printf("\n");
+        printf("\n");
+    }
 }
-void alarmStopHandler(int signal) {
-    printf("Time is over.\n");
-    printf("\n");
-    pcap_breakloop(handle);
 
-}
 
 int main(int argc, char *argv[]) {
     char *dev = NULL;  //device to sniff on
     //pcap_t *handle; // Session handle  
     char errbuf[PCAP_ERRBUF_SIZE]; //Error string
     struct bpf_program fp; //The compiled filter expression
-    char filter_expRIP[] = "port 520"; //The filter expression RIP
-    char filter_expRIPng[] = "port 521"; //The filter expression for RIPng
+    char filter_expRIP[] = "port 520 or port 521"; //The filter expression RIP
+    //char filter_expRIPng[] = "port 521"; //The filter expression for RIPng
     bpf_u_int32 mask; //The netmask of our sniffing device
     bpf_u_int32 net; //The IP of our sniffing device
     struct pcap_pkthdr header; //The header that pcap gives us
     const u_char *packet; //The actual packet
 
-    if (argc != 3) {
+    if (argc < 2) {
         fprintf(stderr, "Bad number of arguments.\n");
         return -1;
     }
     int option;
-    while((option = getopt(argc, argv, "i:")) != -1) {
+    while((option = getopt(argc, argv, "i:h")) != -1) {
         switch(option) {
             case 'i':
                 dev = optarg;
                 break;
+            case 'h':
+                fprintf(stderr, "Please enter argument: -i <interface>\nwhere <interface> is interface on which packet capture is to be performed.\n");
+                return 0;
             case '?':
                 fprintf(stderr, "Bad argument.\n");
                 return -1;
@@ -113,40 +119,23 @@ int main(int argc, char *argv[]) {
         return(-1);
     }
 
-    //Set and Compile RIPv1 and RIPv2 filter
+    //Set and Compile RIPv1, RIPv2 and RIPng filter
     if (pcap_compile(handle, &fp, filter_expRIP, 0, net) == -1) {
         fprintf(stderr, "Could not parse filter %s: %s\n", filter_expRIP, pcap_geterr(handle));
         return(-1);
     }
+    
 
     if (pcap_setfilter(handle, &fp) == -1) {
         fprintf(stderr, "Could not install filter %s: %s\n", filter_expRIP, pcap_geterr(handle));
         return(-1);
     }
 
-    printf("RIPv1 and RIPv2.\n");
-    alarm(60);
-    signal(SIGALRM, alarmStopHandler);
-    //Grab a packet
-    pcap_loop(handle, -1, ripInfo, NULL);
-
-    //Set and Compile RIPng filter
-    if (pcap_compile(handle, &fp, filter_expRIPng, 0, net) == -1) {
-        fprintf(stderr, "Could not parse filter %s: %s\n", filter_expRIPng, pcap_geterr(handle));
-        return(-1);
-    }
-
-    if (pcap_setfilter(handle, &fp) == -1) {
-        fprintf(stderr, "Could not install filter %s: %s\n", filter_expRIPng, pcap_geterr(handle));
-        return(-1);
-    }
-
-    printf("RIPng.\n");
-    alarm(60);
-    //Grab a packet
-    pcap_loop(handle, -1, ripngInfo, NULL);
+  
+    pcap_loop(handle, 0, ripInfo, NULL);
+        
     //Close the session
     pcap_close(handle);
-    //printf("Device: %s\n", dev);
+
     return (0);
 }

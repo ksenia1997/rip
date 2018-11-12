@@ -29,16 +29,19 @@ int main(int argc, char *argv[]) {
     converted_next_hop = inet_pton(AF_INET6, ip_addr_next_hop, &ipv6_nexthop_addr);
     converted_addr = inet_pton(AF_INET6, prefix, &ipv6_addr);
 
-    if (argc != 3) {
-        fprintf(stderr, "Bad number of arguments.\n");
+    if (argc < 2) {
+        fprintf(stderr, "Bad number of arguments.\n Please enter: ./myriprequest -h to see a help.\n");
         return -1;
     }
     int option;
-    while((option = getopt(argc, argv, "i:")) != -1) {
+    while((option = getopt(argc, argv, "i:h")) != -1) {
         switch(option) {
             case 'i':
                 interface = optarg;
                 break;
+            case 'h':
+                fprintf(stderr, "Please enter: ./myriprequest -i <interface>\n where <interface> is interface for request.\n");
+                return 0;
             case '?':
                 fprintf(stderr, "Bad argument.\n");
                 return -1;
