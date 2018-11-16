@@ -7,6 +7,8 @@
 #include <pcap.h>
 #include <string.h>
 #include <csignal>
+#include <arpa/inet.h>
+#include <netinet/ip.h>
 #define RIP_ENTRY 20
 pcap_t *handle; // Session handle  
 //Print information about RIPv1 and RIPv2 
@@ -36,8 +38,11 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
         if (ripCommand == 2) {
             printf("Command: Response.\n");
         }
-        else {
+        else if (ripCommand == 1){
             printf("Command: Request.\n");
+        }
+        else {
+            printf("Command: %d\n", ripCommand);
         }
         int ripVersion = packet[43];
         printf("Version: RIPv%x\n", ripVersion);
@@ -53,18 +58,20 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
                                                                                 packet[54], packet[55], packet[56], packet[57], 
                                                                                 packet[58], packet[59], packet[60], packet[61], 
                                                                                 packet[62], packet[63], packet[64], packet[65]);
-                    int i = 66;
+                    
                     printf("\n");
-                    printf("Route Entry.\n");
+                    printf("Route Entry:\n");
+                    int i = 66;
                     while((i+RIP_ENTRY) <= (42+packetLen)) {
                         printf("Address Family: %d\n", (short)(((unsigned char)packet[i]) << 8 | ((unsigned char)packet[i+1])));
                         printf("Route tag: %d\n", (short)(((unsigned char)packet[i+2]) << 8 | ((unsigned char)packet[i+3])));
                         printf("IP address: %d:%d:%d:%d\n", packet[i+4], packet[i+5], packet[i+6], packet[i+7]);
                         printf("Netmask: %d:%d:%d:%d\n", packet[i+8], packet[i+9], packet[i+10], packet[i+11]);
                         printf("Next hop: %d:%d:%d:%d\n", packet[i+12], packet[i+13], packet[i+14], packet[i+15]);
-                        long metric = 0;
+                        uint32_t metric = 0;
                         for (int k = 0; k < 4; k++) {
                             metric = (metric << 4) | packet[i+16+k];
+                            
                         }
                         printf("Metric: %d\n", metric);
                         printf("\n");
@@ -88,16 +95,43 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
         printf("\n");
     }
     else {
-        short packetLen = (short)(((unsigned char)packet[42]) << 8 | ((unsigned char)packet[43]));
-        packetLen = packetLen - 8;
+        short RTELen = (short)(((unsigned char)packet[58]) << 8 | ((unsigned char)packet[59]));
+        RTELen = RTELen - 12; //len of RTE        
         printf("Version: RIPng\n");
-           
+        int command = packet[62];
+        if (command == 2) {
+            printf("Command: Response (%d)\n",command); 
+        }
+        else if (command == 1){
+            printf("Command: Request (%d)\n", command); 
+        }
+        else{
+            printf("Command: %d\n", command);
+        }
+        printf("\n");
+        printf("Route Table Entry:\n");
+        int i = 66;
+        int k = 0;
+        while (k <= RTELen) {
+            printf("IPv6 Prefix: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n", packet[i+k], packet[i+k+1], packet[i+k+2],packet[i+k+3], 
+                                                                                                        packet[i+k+4], packet[i+k+5], packet[i+k+6], packet[i+k+7], 
+                                                                                                        packet[i+k+8], packet[i+k+9], packet[i+k+10], packet[i+k+11], 
+                                                                                                        packet[i+k+12], packet[i+k+13], packet[i+k+14], packet[i+k+15]);
+            short routeTag = (short)(((unsigned char)packet[i+k+16]) << 8 | ((unsigned char)packet[i+k+17]));
+            printf("Route Tag: %d\n", routeTag);
+            printf("Prefix Length: %d\n", packet[i+k+18]);
+            printf("Metric: %d\n", packet[i+k+19]);
+            printf("\n");     
+            k += 20;                                                                                       
+        }
         printf("Source IPv6 address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",packet[22], packet[23], packet[24], packet[25], packet[26], packet[27], packet[28], packet[29],
                                                                             packet[30], packet[31], packet[32], packet[33], packet[34], packet[35], packet[36], packet[37]);
         printf("Destination IPv6 address: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n", packet[38], packet[39], packet[40], packet[41], packet[42], packet[43], packet[44], packet[45],
                                                         packet[46], packet[47], packet[48], packet[49], packet[50], packet[51], packet[52], packet[53]);
     
         printf("\n");
+
+       
     }
 }
 
