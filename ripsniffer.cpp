@@ -46,7 +46,22 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
         }
         int ripVersion = packet[43];
         printf("Version: RIPv%x\n", ripVersion);
-        if (ripVersion == 2) {
+        if (ripVersion == 1) {
+            int ripv1_len = packetLen - 4;
+            int l = 0;
+            while (l < ripv1_len) {
+                short addr_family_id = (short)(((unsigned char)packet[46+l]) << 8 | ((unsigned char)packet[47+l]));
+                printf("Address family identifier: %d\n", addr_family_id);
+                printf("IPv4 address: %d:%d:%d:%d\n", packet[50+l], packet[51+l], packet[52+l], packet[53+l]);
+                uint32_t metric = 0;            
+                metric = ((metric << 4) | packet[62+l] | (metric<<4)| packet[63+l] | (metric<<4)|packet[64+l]| (metric<<4)|packet[65+l]);
+                printf("Metric: %d\n", metric);
+                printf("\n");
+                l += RIP_ENTRY;
+            }
+        }
+        else if (ripVersion == 2) {
+            //check if 0xFFFF 
             if ((int(packet[46]) == 255) && (int(packet[47]) == 255)){
                 //authentication Type is 2 byte
                 int authenticationType1 = packet[48];
@@ -62,6 +77,7 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
                     printf("\n");
                     printf("Route Entry:\n");
                     int i = 66;
+                    printf("packet len: %d\n", packetLen);
                     while((i+RIP_ENTRY) <= (42+packetLen)) {
                         printf("Address Family: %d\n", (short)(((unsigned char)packet[i]) << 8 | ((unsigned char)packet[i+1])));
                         printf("Route tag: %d\n", (short)(((unsigned char)packet[i+2]) << 8 | ((unsigned char)packet[i+3])));
@@ -69,10 +85,9 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
                         printf("Netmask: %d:%d:%d:%d\n", packet[i+8], packet[i+9], packet[i+10], packet[i+11]);
                         printf("Next hop: %d:%d:%d:%d\n", packet[i+12], packet[i+13], packet[i+14], packet[i+15]);
                         uint32_t metric = 0;
-                        for (int k = 0; k < 4; k++) {
-                            metric = (metric << 4) | packet[i+16+k];
-                            
-                        }
+                        
+                        metric = ((metric << 4) | packet[i+16+0] | (metric<<4)| packet[i+17] | (metric<<4)|packet[i+18]| (metric<<4)|packet[i+19]);
+                          
                         printf("Metric: %d\n", metric);
                         printf("\n");
                         i = i+RIP_ENTRY;                                    
@@ -82,6 +97,11 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
 
                 else if ((authenticationType1 == 0)&&(authenticationType2 == 3)) {
                     printf("Authentication: MD5");
+                    short rip2_packetLen = (short)(((unsigned char)packet[50]) << 8 | ((unsigned char)packet[51]));
+                    printf("RIP-2 packet length: %d\n", rip2_packetLen);
+                    printf("Key ID: %d\n", packet[52]);
+                    printf("Authentication data length: %d\n", packet[53]);
+
                 }
                 else{
                     printf("Authentication: Other");
@@ -112,7 +132,7 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
         printf("Route Table Entry:\n");
         int i = 66;
         int k = 0;
-        while (k <= RTELen) {
+        while (k <RTELen) {
             printf("IPv6 Prefix: %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n", packet[i+k], packet[i+k+1], packet[i+k+2],packet[i+k+3], 
                                                                                                         packet[i+k+4], packet[i+k+5], packet[i+k+6], packet[i+k+7], 
                                                                                                         packet[i+k+8], packet[i+k+9], packet[i+k+10], packet[i+k+11], 
@@ -162,7 +182,7 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "Please enter argument: -i <interface>\nwhere <interface> is interface on which packet capture is to be performed.\n");
                 return 0;
             case '?':
-                fprintf(stderr, "Bad argument.\n");
+                fprintf(stderr, "Bad argument. Please enter \"./myripsniffer -h \" to see a help.\n");
                 return -1;
             default:
                 exit(-1);
