@@ -84,10 +84,8 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
                         printf("IP address: %d:%d:%d:%d\n", packet[i+4], packet[i+5], packet[i+6], packet[i+7]);
                         printf("Netmask: %d:%d:%d:%d\n", packet[i+8], packet[i+9], packet[i+10], packet[i+11]);
                         printf("Next hop: %d:%d:%d:%d\n", packet[i+12], packet[i+13], packet[i+14], packet[i+15]);
-                        uint32_t metric = 0;
-                        
-                        metric = ((metric << 4) | packet[i+16+0] | (metric<<4)| packet[i+17] | (metric<<4)|packet[i+18]| (metric<<4)|packet[i+19]);
-                          
+                        uint32_t metric = 0;   
+                        metric = ((metric << 4) | packet[i+16+0] | (metric<<4)| packet[i+17] | (metric<<4)|packet[i+18]| (metric<<4)|packet[i+19]);  
                         printf("Metric: %d\n", metric);
                         printf("\n");
                         i = i+RIP_ENTRY;                                    
@@ -96,11 +94,39 @@ void ripInfo(u_char *args,const struct pcap_pkthdr* header,const u_char* packet)
                 }
 
                 else if ((authenticationType1 == 0)&&(authenticationType2 == 3)) {
+                    int lenRTE = packetLen - 24;
                     printf("Authentication: MD5");
                     short rip2_packetLen = (short)(((unsigned char)packet[50]) << 8 | ((unsigned char)packet[51]));
                     printf("RIP-2 packet length: %d\n", rip2_packetLen);
                     printf("Key ID: %d\n", packet[52]);
                     printf("Authentication data length: %d\n", packet[53]);
+                    uint32_t seq_num = 0;
+                    seq_num = ((seq_num << 4) | packet[54] | (seq_num<<4)| packet[55] | (seq_num<<4)|packet[56]| (seq_num<<4)|packet[57]);
+                    printf("Sequence number: %d\n", seq_num);
+                    int idx = 0;
+                    printf("\n");
+                    printf("Route Table Entry.\n");
+                    while(idx < lenRTE) {
+                        if ((int(packet[66+idx]) == 255) && (int(packet[67+idx]) == 255)) {
+                            printf("Authentication Data: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n", packet[70+idx], packet[71+idx],
+                                    packet[72+idx], packet[73+idx], packet[74+idx], packet[75+idx], packet[76+idx], packet[77+idx], packet[78+idx], packet[79+idx],
+                                    packet[80+idx], packet[81+idx], packet[82+idx], packet[83+idx], packet[84+idx], packet[85+idx]);
+                            idx += RIP_ENTRY;
+                        }
+                        else{
+                            printf("Address Family: %d\n", (short)(((unsigned char)packet[66+idx]) << 8 | ((unsigned char)packet[67+idx])));
+                            printf("Route tag: %d\n", (short)(((unsigned char)packet[68 + idx]) << 8 | ((unsigned char)packet[69+idx])));
+                            printf("IP address: %d:%d:%d:%d\n", packet[70+idx], packet[71+idx], packet[72+idx], packet[73+idx]);
+                            printf("Netmask: %d:%d:%d:%d\n", packet[74+idx], packet[75+idx], packet[76+idx], packet[77+idx]);
+                            printf("Next hop: %d:%d:%d:%d\n", packet[78+idx], packet[79+idx], packet[80+idx], packet[81+idx]);
+                            uint32_t metric = 0;
+                            metric = ((metric << 4) | packet[82+idx] | (metric<<4)| packet[83+idx] | (metric<<4)|packet[84+idx]| (metric<<4)|packet[85+idx]);
+                            printf("Metric: %d\n", metric);
+                            printf("\n");
+                            idx += RIP_ENTRY;
+                        }
+                    }
+
 
                 }
                 else{
@@ -169,7 +195,7 @@ int main(int argc, char *argv[]) {
     const u_char *packet; //The actual packet
 
     if (argc < 2) {
-        fprintf(stderr, "Bad number of arguments.\n");
+        fprintf(stderr, "Missing arguments.\nPlease enter: \"./myripsniffer -h\" to see a help.\n");
         return -1;
     }
     int option;
@@ -223,7 +249,7 @@ int main(int argc, char *argv[]) {
         return(-1);
     }
 
-  
+    printf("Start sniffing.\n");
     pcap_loop(handle, 0, ripInfo, NULL);
         
     //Close the session
