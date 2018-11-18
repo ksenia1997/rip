@@ -14,7 +14,8 @@ int main(int argc, char* argv[]){
     char* ip_addr = NULL;
     char* ip_addr_next_hop = (char*) "::";
     char* netmask;
-    char* prefix;
+    char* prefix = NULL;
+    char* pch = NULL;
     char* metric = (char*) "1";
     char* router_tag = (char*) "0";
     int converted_next_hop;
@@ -37,9 +38,27 @@ int main(int argc, char* argv[]){
                 index = if_nametoindex(optarg);
                 break;
             case 'r':
-                ip_addr = strtok(optarg, "/");
-                prefix = strtok(NULL, "/");
+
+                if (optarg[(strlen(optarg) - 3)] == '/') {
+                    ip_addr = strtok(optarg, "/");               
+                    prefix = strtok(NULL, "/");   
+                }
+                else if (optarg[(strlen(optarg) - 4)] == '/') {
+                    ip_addr = strtok(optarg, "/");               
+                    prefix = strtok(NULL, "/");  
+                }
+                else {
+                    fprintf(stderr, "Must be ip address/netmask and netmask is [16, 128]\n");
+                    return -1;
+                }
+                  
                 netmask = prefix; 
+                for (int i = 0; i < strlen(netmask); i++) {
+                    if (!isdigit(netmask[i])) {
+                        fprintf(stderr, "Netmask must be a number[16,128].\n");
+                        return -1;
+                    }
+                }
                 converted_addr = inet_pton(AF_INET6, ip_addr, &ipv6_addr);
                 if (converted_addr <= 0) {
                     if (converted_addr == 0) {
@@ -71,13 +90,25 @@ int main(int argc, char* argv[]){
                 break;
             case 'm':
                 metric = optarg;
+                for (int i = 0; i < strlen(metric); i++) {
+                    if (!isdigit(metric[i])) {
+                        fprintf(stderr, "Metric must be a number.\n");
+                        return -1;
+                    }
+                }
                 if (!((atoi(metric) >= 0)&& (atoi(metric) <= 16))) {
-                    fprintf(stderr, "Metric is out of range.\n");
+                    fprintf(stderr, "Metric is out of range. Must be [0,16]\n");
                     exit(-1);
                 }
                 break;
             case 't':
                 router_tag = optarg;
+                for (int i = 0; i < strlen(router_tag); i++) {
+                    if (!isdigit(router_tag[i])) {
+                        fprintf(stderr, "Router tag must be a number.\n");
+                        return -1;
+                    }
+                }
                 if (!((atoi(router_tag) >= 0) && (atoi(router_tag) <= 65535))) {
                     fprintf(stderr, "Router tag is out of range.\n");
                     exit(-1);
@@ -100,7 +131,7 @@ int main(int argc, char* argv[]){
         exit(-1);
     }
     printf("Interface: %s\n", interface);
-    printf("IP address: %s, netmask: %s\n", prefix, netmask);
+    printf("IP address: %s, netmask: %s\n", ip_addr, netmask);
     printf("IP address of next hop: %s\n", ip_addr_next_hop);
     printf("Metric: %s\n", metric);
     printf("Router tag: %s\n", router_tag);
